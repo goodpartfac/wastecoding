@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เกมแยกขยะ - โรงเรียนบ้านใหม่วัฒนา</title>
+    <style>
+        /* --- CSS: การตกแต่งหน้าตาเกม --- */
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+            overflow: hidden; /* ป้องกันการเลื่อนหน้าจอ */
+            touch-action: none; /* ป้องกันการซูมบนมือถือ */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 3D Container Style */
+        .container {
+            width: 95%;
+            height: 95%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Header Section --- */
+        header {
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .school-logo {
+            height: 60px;
+            vertical-align: middle;
+            margin-right: 10px;
+            background-color: #fff;
+            border-radius: 50%;
+            padding: 2px;
+        }
+        
+        /* Fallback for logo if image missing */
+        .school-logo:not([src]){
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background: #eee;
+            border-radius: 50%;
+            content: 'Logo';
+            line-height: 60px;
+            color: #333;
+            font-size: 10px;
+        }
+
+        h1, h2, h3 { margin: 0; line-height: 1.2; }
+        h1 { font-size: 1.2rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        h2 { font-size: 1rem; color: #fff; }
+        h3 { font-size: 0.9rem; font-weight: normal; color: #e0f7fa; }
+
+        /* --- Screens (Start, Game, End) --- */
+        .screen {
+            flex: 1;
+            display: none; /* ซ่อนไว้ก่อน */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+        }
+
+        .active { display: flex; }
+
+        /* --- Start Screen Form --- */
+        .form-group {
+            margin: 10px 0;
+            width: 80%;
+            max-width: 400px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Sarabun', sans-serif;
+            box-sizing: border-box;
+        }
+        .btn-start, .btn-restart {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #e65100, 0 10px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .btn-start:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #e65100;
+        }
+
+        /* --- Game Area --- */
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            background: #f0f0f0;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .bins-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            width: 100%;
+            flex: 1;
+            padding-bottom: 20px;
+        }
+
+        .bin {
+            width: 22%;
+            height: 180px;
+            background-size: contain;
+            background-position: center bottom;
+            background-repeat: no-repeat;
+            position: relative;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        /* CSS Fallback for bins if images missing */
+        .bin-green { background-color: rgba(76, 175, 80, 0.2); border-bottom: 5px solid #4CAF50; }
+        .bin-blue { background-color: rgba(33, 150, 243, 0.2); border-bottom: 5px solid #2196F3; }
+        .bin-yellow { background-color: rgba(255, 235, 59, 0.2); border-bottom: 5px solid #FBC02D; }
+        .bin-red { background-color: rgba(244, 67, 54, 0.2); border-bottom: 5px solid #F44336; }
+
+        .bin img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none; /* ไม่ให้กดที่รูปถัง */
+        }
+
+        .bin-label {
+            background: white;
+            padding: 2px 5px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            margin-bottom: -20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* --- Garbage Item (Draggable) --- */
+        #garbage-item {
+            width: 120px;
+            height: 80px;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            position: absolute;
+            top: 20%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            z-index: 100;
+            user-select: none;
+            touch-action: none; /* สำคัญมากสำหรับมือถือ */
+        }
+        #garbage-item:active { cursor: grabbing; }
+
+        /* --- Result Screen --- */
+        .result-box {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 80%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .stars { font-size: 3rem; color: #ffd700; margin: 10px 0; }
+        .score-text { font-size: 2rem; font-weight: bold; color: #333; }
+        .knowledge-box {
+            text-align: left;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .knowledge-item { margin-bottom: 5px; }
+        .k-color { font-weight: bold; display: inline-block; width: 60px; }
+
+        /* Animation classes */
+        .shake { animation: shake 0.5s; }
+        .pop { animation: pop 0.3s; }
+
+        @keyframes shake {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-55%, -50%) rotate(-5deg); }
+            75% { transform: translate(-45%, -50%) rotate(5deg); }
+            100% { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="logo.png" alt="Logo" class="school-logo" onerror="this.style.display='none'">
+            <div>
+                <h1>โรงเรียนบ้านใหม่วัฒนา</h1>
+                <h2>ครูผู้สอน: ครูขันทอง โพธิ์เตี้ย</h2>
+                <h3>วิชาคอมพิวเตอร์ วิทยาการคำนวณ (โค้ดดิ้ง)</h3>
+            </div>
+        </div>
+    </header>
+
+    <div id="start-screen" class="screen active">
+        <h2 style="color:#333; font-size:1.5rem; margin-bottom:20px;">เกมแยกขยะ พิทักษ์โลก</h2>
+        
+        <div class="form-group">
+            <input type="text" id="studentName" placeholder="ชื่อ-นามสกุล นักเรียน">
+        </div>
+        <div class="form-group">
+            <input type="text" id="studentID" placeholder="เลขประจำตัวนักเรียน" inputmode="numeric">
+        </div>
+        <div class="form-group">
+            <select id="studentClass">
+                <option value="">-- เลือกระดับชั้น --</option>
+                <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+                <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+                <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+                <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+                <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+                <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+            </select>
+        </div>
+        <button class="btn-start" onclick="startGame()">เริ่มเล่นเกม</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="game-info">
+            <div id="player-display" style="font-size: 0.9rem;">น้อง... ชั้น...</div>
+            <div style="color: #d32f2f;">เวลา: <span id="timer">60</span> วิ</div>
+            <div style="color: #388e3c;">คะแนน: <span id="score">0</span></div>
+        </div>
+
+        <div id="garbage-item">
+            <span id="garbage-text">ขยะ</span>
+        </div>
+
+        <div class="bins-container">
+            <div class="bin bin-green" id="bin-green">
+                <img src="bin_green.png" alt="ถังเขียว" onerror="this.style.display='none'; this.parentElement.innerText='ถังเขียว\n(อินทรีย์)'; this.parentElement.style.color='#1b5e20'; this.parentElement.style.justifyContent='center';">
+                <div class="bin-label" style="color:#2e7d32">อินทรีย์</div>
+            </div>
+            <div class="bin bin-blue" id="bin-blue">
+                <img src="bin_blue.png" alt="ถังฟ้า" onerror="this.style.display='none'; this.parentElement.innerText='ถังฟ้า\n(รีไซเคิล)'; this.parentElement.style.color='#0d47a1'; this.parentElement.style.justifyContent='center';">
+                <div class="bin-label" style="color:#1565c0">รีไซเคิล</div>
+            </div>
+            <div class="bin bin-yellow" id="bin-yellow">
+                <img src="bin_yellow.png" alt="ถังเหลือง" onerror="this.style.display='none'; this.parentElement.innerText='ถังเหลือง\n(ทั่วไป)'; this.parentElement.style.color='#f57f17'; this.parentElement.style.justifyContent='center';">
+                <div class="bin-label" style="color:#f9a825">ทั่วไป</div>
+            </div>
+            <div class="bin bin-red" id="bin-red">
+                <img src="bin_red.png" alt="ถังแดง" onerror="this.style.display='none'; this.parentElement.innerText='ถังแดง\n(อันตราย)'; this.parentElement.style.color='#b71c1c'; this.parentElement.style.justifyContent='center';">
+                <div class="bin-label" style="color:#c62828">อันตราย</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="end-screen" class="screen">
+        <div class="result-box">
+            <h2 style="color:#333;">จบเกมแล้ว!</h2>
+            <div class="stars" id="final-stars">⭐⭐⭐</div>
+            <div class="score-text">คะแนน: <span id="final-score">0</span></div>
+            <h3 id="pass-status" style="margin:10px 0; font-size:1.5rem;"></h3>
+            
+            <div class="knowledge-box">
+                <h4 style="margin-top:0;">💡 ความรู้เรื่องการแยกขยะ</h4>
+                <div class="knowledge-item"><span class="k-color" style="color:green">สีเขียว</span> : เศษอาหาร ใบไม้ -> ทำปุ๋ยหมัก</div>
+                <div class="knowledge-item"><span class="k-color" style="color:blue">สีฟ้า</span> : พลาสติก แก้ว กระดาษ -> รีไซเคิล</div>
+                <div class="knowledge-item"><span class="k-color" style="color:#fbc02d">สีเหลือง</span> : ถุงขนม ผ้า ยาง -> ขยะทั่วไป</div>
+                <div class="knowledge-item"><span class="k-color" style="color:red">สีแดง</span> : หลอดไฟ ถ่านไฟฉาย -> อันตราย</div>
+            </div>
+
+            <button class="btn-restart" onclick="location.reload()">เล่นใหม่อีกครั้ง</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* --- Javascript Logic --- */
+    
+    // ข้อมูลขยะ (เพิ่มลดคำศัพท์ได้ที่นี่)
+    const garbageData = [
+        // type: green, blue, yellow, red
+        { name: "ก้างปลา", type: "green" },
+        { name: "เศษข้าว", type: "green" },
+        { name: "เปลือกกล้วย", type: "green" },
+        { name: "ใบไม้แห้ง", type: "green" },
+        { name: "เปลือกไข่", type: "green" },
+        
+        { name: "ขวดน้ำพลาสติก", type: "blue" },
+        { name: "กระดาษลัง", type: "blue" },
+        { name: "กระป๋องน้ำอัดลม", type: "blue" },
+        { name: "ขวดแก้ว", type: "blue" },
+        { name: "กระดาษหนังสือพิมพ์", type: "blue" },
+        
+        { name: "ถุงขนมขบเคี้ยว", type: "yellow" },
+        { name: "เศษผ้า", type: "yellow" },
+        { name: "กล่องโฟมเปื้อน", type: "yellow" },
+        { name: "ถุงพลาสติกเปื้อนแกง", type: "yellow" },
+        { name: "เศษยางลบ", type: "yellow" },
+        
+        { name: "ถ่านไฟฉาย", type: "red" },
+        { name: "หลอดไฟแตก", type: "red" },
+        { name: "กระป๋องสเปรย์", type: "red" },
+        { name: "ขวดยาฆ่าแมลง", type: "red" },
+        { name: "แบตเตอรี่มือถือ", type: "red" }
+    ];
+
+    let score = 0;
+    let timeLeft = 60;
+    let timerInterval;
+    let currentItem = null;
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    const dragItem = document.getElementById("garbage-item");
+    const bins = {
+        green: document.getElementById("bin-green"),
+        blue: document.getElementById("bin-blue"),
+        yellow: document.getElementById("bin-yellow"),
+        red: document.getElementById("bin-red")
+    };
+
+    // ระบบเสียงพูด (Text-to-Speech)
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH'; // ภาษาไทย
+            utterance.rate = 1.0; // ความเร็วปกติ
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function startGame() {
+        const name = document.getElementById("studentName").value;
+        const sClass = document.getElementById("studentClass").value;
+        const sID = document.getElementById("studentID").value;
+
+        if (!name || !sClass || !sID) {
+            alert("กรุณากรอกข้อมูลให้ครบถ้วนครับ");
+            return;
+        }
+
+        // Setup หน้าจอ
+        document.getElementById("start-screen").classList.remove("active");
+        document.getElementById("game-screen").classList.add("active");
+        document.getElementById("player-display").innerText = `น้อง${name} (${sClass}) เลขที่ ${sID}`;
+
+        score = 0;
+        timeLeft = 60;
+        updateScore();
+        spawnGarbage();
+
+        // เริ่มจับเวลา
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById("timer").innerText = timeLeft;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+        
+        speak("เริ่มเกมได้เลยครับ");
+    }
+
+    function spawnGarbage() {
+        // สุ่มขยะ
+        const randomIndex = Math.floor(Math.random() * garbageData.length);
+        currentItem = garbageData[randomIndex];
+        
+        // แสดงผล
+        const itemEl = document.getElementById("garbage-item");
+        document.getElementById("garbage-text").innerText = currentItem.name;
+        
+        // Reset ตำแหน่ง (กลางจอ)
+        itemEl.style.top = "20%";
+        itemEl.style.left = "50%";
+        itemEl.style.transform = "translate(-50%, -50%)";
+        itemEl.style.backgroundColor = "white"; // Reset color
+        itemEl.classList.add("pop"); // Animation
+        setTimeout(() => itemEl.classList.remove("pop"), 300);
+    }
+
+    function updateScore() {
+        document.getElementById("score").innerText = score;
+    }
+
+    function endGame() {
+        clearInterval(timerInterval);
+        document.getElementById("game-screen").classList.remove("active");
+        document.getElementById("end-screen").classList.add("active");
+        
+        document.getElementById("final-score").innerText = score;
+        
+        // คำนวณดาว
+        let stars = "";
+        let passText = "";
+        let passColor = "";
+
+        if (score >= 20) { stars = "⭐⭐⭐"; passText = "ยอดเยี่ยม! ผ่านเกณฑ์"; passColor = "green"; }
+        else if (score >= 10) { stars = "⭐⭐"; passText = "ดีมาก! ผ่านเกณฑ์"; passColor = "green"; }
+        else if (score >= 5) { stars = "⭐"; passText = "พอใช้ (พยายามอีกนิด)"; passColor = "orange"; }
+        else { stars = "❌"; passText = "ไม่ผ่านเกณฑ์ (สู้ๆนะ)"; passColor = "red"; }
+
+        document.getElementById("final-stars").innerText = stars;
+        const statusEl = document.getElementById("pass-status");
+        statusEl.innerText = passText;
+        statusEl.style.color = passColor;
+        
+        if(score >= 10) speak("ยินดีด้วยครับ คุณสอบผ่าน");
+        else speak("หมดเวลาแล้ว ลองใหม่อีกครั้งนะครับ");
+    }
+
+    // --- Drag and Drop Logic (รองรับทั้ง Mouse และ Touch) ---
+
+    function handleStart(e) {
+        // e.preventDefault(); // อย่าเพิ่งใส่ อาจจะทำให้กดปุ่มไม่ได้
+        if(e.target !== dragItem && !dragItem.contains(e.target)) return;
+        
+        isDragging = true;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        startX = clientX;
+        startY = clientY;
+        
+        const rect = dragItem.getBoundingClientRect();
+        // คำนวณ offset จาก parent (container) ไม่ใช่หน้าจอ
+        initialLeft = dragItem.offsetLeft;
+        initialTop = dragItem.offsetTop;
+        
+        dragItem.style.cursor = "grabbing";
+    }
+
+    function handleMove(e) {
+        if (!isDragging) return;
+        e.preventDefault(); // ป้องกันการเลื่อนหน้าจอเวลาลาก
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+
+        dragItem.style.left = `${initialLeft + dx}px`;
+        dragItem.style.top = `${initialTop + dy}px`;
+    }
+
+    function handleEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        dragItem.style.cursor = "grab";
+
+        checkDrop();
+    }
+
+    // ตรวจสอบการชน (Collision Detection)
+    function checkDrop() {
+        const itemRect = dragItem.getBoundingClientRect();
+        let droppedType = null;
+
+        // เช็คว่าไอเท็มไปทับถังไหนบ้าง
+        for (const [type, binEl] of Object.entries(bins)) {
+            const binRect = binEl.getBoundingClientRect();
+            
+            // สูตรเช็คการทับกัน (Overlap)
+            if (!(itemRect.right < binRect.left || 
+                  itemRect.left > binRect.right || 
+                  itemRect.bottom < binRect.top || 
+                  itemRect.top > binRect.bottom)) {
+                droppedType = type;
+                break;
+            }
+        }
+
+        if (droppedType) {
+            if (droppedType === currentItem.type) {
+                // ถูกต้อง
+                score += 2; // ให้คะแนน
+                speak("ใช่ครับ"); // เสียง
+                dragItem.style.backgroundColor = "#81c784"; // สีเขียวชั่วคราว
+                updateScore();
+                setTimeout(spawnGarbage, 500); // เรียกข้อต่อไป
+            } else {
+                // ผิด
+                speak("ยังไม่ใช่ครับ"); // เสียง
+                dragItem.classList.add("shake"); // สั่นเตือน
+                setTimeout(() => dragItem.classList.remove("shake"), 500);
+                
+                // เด้งกลับที่เดิม
+                dragItem.style.top = "20%";
+                dragItem.style.left = "50%";
+            }
+        } else {
+            // ไม่โดนถังเลย -> เด้งกลับ
+             dragItem.style.top = "20%";
+             dragItem.style.left = "50%";
+        }
+    }
+
+    // Event Listeners
+    document.addEventListener("mousedown", handleStart);
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleEnd);
+
+    document.addEventListener("touchstart", handleStart, {passive: false});
+    document.addEventListener("touchmove", handleMove, {passive: false});
+    document.addEventListener("touchend", handleEnd);
+
+</script>
+
+</body>
+</html>
